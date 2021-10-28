@@ -97,21 +97,23 @@ QState QHsmTst_emergency(QHsmTst *me){
 	   }
 	   case TICK_SIG:{
 		   	if(HSM_QHsmTst.emergency_idle ==1) return Q_HANDLED();
-			
-			if(HSM_QHsmTst.curr_floor != 0){
-				if (HSM_QHsmTst.move_time < MOVE_TIME_F-1) HSM_QHsmTst.move_time++;
-	    		else {
-					HSM_QHsmTst.move_time = 0;
-					HSM_QHsmTst.curr_floor = HSM_QHsmTst.curr_floor + HSM_QHsmTst.curr_dir;
+			else{
+				if(HSM_QHsmTst.curr_floor != 0){
+					if (HSM_QHsmTst.move_time < MOVE_TIME_F-1) HSM_QHsmTst.move_time++;
+					else {
+						HSM_QHsmTst.move_time = 0;
+						HSM_QHsmTst.curr_floor = HSM_QHsmTst.curr_floor + HSM_QHsmTst.curr_dir;
+					}
+				}else{
+					HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
+					HSM_QHsmTst.emergency_curr_call_time = simTime;
+					HSM_QHsmTst.emergency_idle =1;
+					
 				}
-			}else{
-				HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
-				HSM_QHsmTst.emergency_curr_call_time = simTime;
-				HSM_QHsmTst.emergency_idle =1;
-				
+				return Q_HANDLED();
 			}
 			
-			return Q_HANDLED();
+			
 	   	} 
        
 	   case EMERGENCY_OFF_SIG:{
