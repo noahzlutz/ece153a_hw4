@@ -17,6 +17,12 @@ typedef struct QHsmTstTag {
 	int floor_curr_call_time[5]; /* measures when request is made */
 	int floor_calls[5];          /* keeps track of how many requests were made to each floor */
 	double floor_total_time[5];  /* keeps track of cumulative time to service each request */
+
+	int emergency_curr_call_time;
+	int emergency_calls;
+	double emergency_total_time;
+
+
     
 } QHsmTst;
 
@@ -26,7 +32,7 @@ static QState QHsmTst_elevator    (QHsmTst *me);           /* state-handler */
 static QState QHsmTst_stopped   (QHsmTst *me);             /* state-handler */
 static QState QHsmTst_moving  (QHsmTst *me);               /* state-handler */
 
-static QState QHsmTst_emergnecy (QHsmTst *me); /*emergency state handler */
+static QState QHsmTst_emergency (QHsmTst *me); /*emergency state handler */
 
 /* global objects ----------------------------------------------------------*/
 QHsmTst HSM_QHsmTst;           /* the sole instance of the QHsmTst HSM */
@@ -39,6 +45,7 @@ void updatePending_all(void);  /* updates all pending floor calls */
 int checkPending(void);        /* checks if floors are pending  */
 void findDirection(void);      /* determines which direction to go next */
 void printData(void);	       /* prints average service time and number of calls */
+void printDataEmergency(void);
 
 /*..........................................................................*/
 void QHsmTst_ctor(void) {
@@ -55,6 +62,11 @@ void QHsmTst_ctor(void) {
 		HSM_QHsmTst.floor_curr_call_time[x]=-1;
 		HSM_QHsmTst.floor_total_time[x]=0;
 		}
+
+	HSM_QHsmTst.emergency_calls = 0;
+	HSM_QHsmTst.emergency_curr_call_time = -1;
+	HSM_QHsmTst.emergency_total_time = 0;
+	
 }
 
 /*..........................................................................*/
@@ -64,29 +76,46 @@ QState QHsmTst_initial(QHsmTst *me) {
 }
 /*..........................................................................*/
 
-QState QHsmTst_emergnecy(QHsmTst *me){
-    for(int x =0; x <5; x++){
-        HSM_QHsmTst.floor_req_curr[x]=0;
-        HSM_QHsmTst.floor_pen[x] = 0;
-    }
+QState QHsmTst_emergency(QHsmTst *me){
     switch (Q_sig(me)){
-       case EMERGENCY_ON_SIG:{} 
-       case EMERGENCY_OFF_SIG:{
-           return Q_HANDLED();
-           
-           
-       }
-
-        
-     }
-     return Q_SUPER(&QHsm_elevator);
+       case EMERGENCY_ON_SIG:{
+			for(int x =0; x <5; x++){
+				HSM_QHsmTst.floor_req_curr[x]=0;
+				HSM_QHsmTst.floor_pen[x] = 0;
+			}
+			HSM_QHsmTst.emergency_curr_call_time = simTime;
+			HSM_QHsmTst.move_time = 0;
+			HSM_QHsmTst.curr_dir = -1;
+			while(HSM_QHsmTst.curr_floor != 0){
+				if (HSM_QHsmTst.move_time < MOVE_TIME_F-1) HSM_QHsmTst.move_time++;
+	    		else {
+					HSM_QHsmTst.move_time = 0;
+					HSM_QHsmTst.curr_floor = HSM_QHsmTst.curr_floor + HSM_QHsmTst.curr_dir;
+				}
+			}
+			HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
+			HSM_QHsmTst.emergency_calls ++;
+			return Q_HANDLED();
+	   	} 
+       
+	   case EMERGENCY_OFF_SIG:{
+           return Q_TRAN(&QHsmTst_stopped);
+       }    
+    }
+    return Q_SUPER(&QHsmTst_elevator);
 }
 
 
 
 /*.......................................................*/
-QState QHsmTst_elevator(QHsmTst *me) {
+QState QHsmTst_elevator(QHsmTst *me){
 	switch (Q_SIG(me)) {
+		case EMERGENCY_ON_SIG:{
+			return Q_TRAN(&QHsmTst_emergency);
+			}
+		case EMERGENCY_OFF_SIG:{
+			return Q_HANDLED();
+			}
 		case Q_ENTRY_SIG: {
 			BSP_display("elevator-ENTRY\n");
 			return Q_HANDLED();
@@ -117,6 +146,7 @@ QState QHsmTst_elevator(QHsmTst *me) {
 			}
 		case PRINT_SIG: {
 			printData();
+			printDataEmergency();
 			}
 	
 		return Q_HANDLED();
@@ -126,6 +156,12 @@ QState QHsmTst_elevator(QHsmTst *me) {
 /*..........................................................................*/
 QState QHsmTst_stopped(QHsmTst *me) {
 	switch (Q_SIG(me)) {
+		case EMERGENCY_ON_SIG:{
+			return Q_TRAN(&QHsmTst_emergency);
+			}
+		case EMERGENCY_OFF_SIG:{
+			return Q_HANDLED();
+			}
 		case Q_ENTRY_SIG: {
             		BSP_display("stopped-ENTRY\n");
 	    		HSM_QHsmTst.stop_time = 0;
@@ -144,7 +180,6 @@ QState QHsmTst_stopped(QHsmTst *me) {
                     if (HSM_QHsmTst.stop_time < STOP_TIME_F-1) HSM_QHsmTst.stop_time++;
 		    		else {
 			    		HSM_QHsmTst.stop_time = 0;
-                        //STOP_TIME_F = 5;
 			    		HSM_QHsmTst.floor_pen[HSM_QHsmTst.curr_floor] = 0; /*Clear that the floor is pending*/ 
 			    		if (checkPending() == 1) return Q_TRAN(&QHsmTst_moving); /*If any other floor is pending, switch to the moving state in the same tick*/
 			    	}
@@ -212,6 +247,12 @@ QState QHsmTst_stopped(QHsmTst *me) {
 /*..........................................................................*/
 QState QHsmTst_moving(QHsmTst *me) {
 	switch (Q_SIG(me)) {
+		case EMERGENCY_ON_SIG:{
+			return Q_TRAN(&QHsmTst_emergency);
+			}
+		case EMERGENCY_OFF_SIG:{
+			return Q_HANDLED();
+			}
 		case Q_ENTRY_SIG: {
 			BSP_display("moving-ENTRY\n");
 			HSM_QHsmTst.move_time = 0;
@@ -360,5 +401,13 @@ void printData(void){
 		printf("F%d average time: %f\n",x+1, HSM_QHsmTst.floor_total_time[x]/HSM_QHsmTst.floor_calls[x]);
 		printf("\n");
 	}
+	return;
+}
+
+void printDataEmergency(void){
+	
+	printf("Emergency calls: %d\n",HSM_QHsmTst.emergency_calls);
+	printf("Emergecny average time: %f\n", HSM_QHsmTst.emergency_total_time/HSM_QHsmTst.emergency_calls);
+	printf("\n");
 	return;
 }

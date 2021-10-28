@@ -16,7 +16,7 @@ static FILE *l_outFile = (FILE *)0;
 static void dispatch(QSignal sig);
 static int outf;
 
-#define CALLTIME 10 //200 or 100 or 50 or 20 or 10
+#define CALLTIME 20 //200 or 100 or 50 or 20 or 10
 #define TOTAL_SIM_TIME 1000000
 #define TRUE 1
 #define FALSE 0
@@ -78,12 +78,22 @@ int main(int argc, char *argv[]) {
 					}
 				}
 			}
+
+		if(simTime%500 == 0 && simTime%1000 != 0){
+			dispatch(EMERGENCY_ON_SIG);
+		}
+
+		if(simTime%1000 == 0){
+			dispatch(EMERGENCY_OFF_SIG);
+		}	
+
 			dispatch(TICK_SIG);
 			simTime++;
 	}
 
 	printf("Results for call time:%d seconds, simulation time:%d seconds\n", CALLTIME, TOTAL_SIM_TIME);	
- 	dispatch(PRINT_SIG); 
+ 	dispatch(PRINT_SIG);
+	 
        
 	if (outf) fclose(l_outFile);
 
