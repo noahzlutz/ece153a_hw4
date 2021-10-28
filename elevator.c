@@ -87,6 +87,7 @@ QState QHsmTst_emergency(QHsmTst *me){
 			HSM_QHsmTst.emergency_curr_call_time = simTime;
 			HSM_QHsmTst.move_time = 0;
 			HSM_QHsmTst.curr_dir = -1;
+			HSM_QHsmTst.emergency_calls =0;
 	   }
 	   case TICK_SIG:{
 			
