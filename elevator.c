@@ -77,7 +77,7 @@ QState QHsmTst_initial(QHsmTst *me) {
 /*..........................................................................*/
 
 QState QHsmTst_emergency(QHsmTst *me){
-    switch (Q_sig(me)){
+    switch (Q_SIG(me)){
        case EMERGENCY_ON_SIG:{
 			int x = 0;
 			for(x =0; x <5; x++){
