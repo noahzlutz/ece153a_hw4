@@ -79,11 +79,11 @@ int main(int argc, char *argv[]) {
 				}
 			}
 
-		if(simTime%500 == 0 && simTime%1000 != 0){
+		if(simTime == 500){
 			dispatch(EMERGENCY_ON_SIG);
 		}
 
-		if(simTime%1000 == 0){
+		if(simTime == 1000){
 			dispatch(EMERGENCY_OFF_SIG);
 		}	
 
