@@ -92,6 +92,7 @@ QState QHsmTst_emergency(QHsmTst *me){
 			HSM_QHsmTst.emergency_calls ++;
 			if(HSM_QHsmTst.curr_floor == 0){
 				HSM_QHsmTst.emergency_idle =1;
+				HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
 			}
 			return Q_HANDLED();
 	   }
