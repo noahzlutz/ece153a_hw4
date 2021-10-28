@@ -78,8 +78,8 @@ QState QHsmTst_initial(QHsmTst *me) {
 
 QState QHsmTst_emergency(QHsmTst *me){
     switch (Q_SIG(me)){
-       case EMERGENCY_ON_SIG:{
-			int x = 0;
+       case Q_ENTRY_SIG:{
+		   int x = 0;
 			for(x =0; x <5; x++){
 				HSM_QHsmTst.floor_req_curr[x]=0;
 				HSM_QHsmTst.floor_pen[x] = 0;
@@ -87,22 +87,27 @@ QState QHsmTst_emergency(QHsmTst *me){
 			HSM_QHsmTst.emergency_curr_call_time = simTime;
 			HSM_QHsmTst.move_time = 0;
 			HSM_QHsmTst.curr_dir = -1;
-			while(HSM_QHsmTst.curr_floor != 0){
+	   }
+	   case TICK_SIG:{
+			
+			if(HSM_QHsmTst.curr_floor != 0){
 				if (HSM_QHsmTst.move_time < MOVE_TIME_F-1) HSM_QHsmTst.move_time++;
 	    		else {
 					HSM_QHsmTst.move_time = 0;
 					HSM_QHsmTst.curr_floor = HSM_QHsmTst.curr_floor + HSM_QHsmTst.curr_dir;
 				}
+			}else{
+				HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
+				HSM_QHsmTst.emergency_calls ++;
 			}
-			HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
-			HSM_QHsmTst.emergency_calls ++;
+			
 			return Q_HANDLED();
 	   	} 
        
 	   case EMERGENCY_OFF_SIG:{
            return Q_TRAN(&QHsmTst_stopped);
        }
-	   case TICK_SIG:
+	   case EMERGENCY_ON_SIG:
 	   case F1_SIG:
 		case F2_SIG:
 		case F3_SIG:
