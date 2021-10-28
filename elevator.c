@@ -21,6 +21,7 @@ typedef struct QHsmTstTag {
 	int emergency_curr_call_time;
 	int emergency_calls;
 	double emergency_total_time;
+	int emergency_idle; /*zero if not on floor one sitting idle 1 if is*/
 
 
     
@@ -66,6 +67,7 @@ void QHsmTst_ctor(void) {
 	HSM_QHsmTst.emergency_calls = 0;
 	HSM_QHsmTst.emergency_curr_call_time = -1;
 	HSM_QHsmTst.emergency_total_time = 0;
+	HSM_QHsmTst.emergency_idle =0;
 	
 }
 
@@ -88,9 +90,14 @@ QState QHsmTst_emergency(QHsmTst *me){
 			HSM_QHsmTst.move_time = 0;
 			HSM_QHsmTst.curr_dir = -1;
 			HSM_QHsmTst.emergency_calls ++;
+			if(HSM_QHsmTst.curr_floor == 0){
+				HSM_QHsmTst.emergency_idle =1;
+				HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
+			}
 			return Q_HANDLED();
 	   }
 	   case TICK_SIG:{
+		   	if(HSM_QHsmTst.emergency_idle ==1) return Q_HANDLED();
 			
 			if(HSM_QHsmTst.curr_floor != 0){
 				if (HSM_QHsmTst.move_time < MOVE_TIME_F-1) HSM_QHsmTst.move_time++;
@@ -100,6 +107,8 @@ QState QHsmTst_emergency(QHsmTst *me){
 				}
 			}else{
 				HSM_QHsmTst.emergency_total_time += simTime - HSM_QHsmTst.emergency_curr_call_time;
+				HSM_QHsmTst.emergency_curr_call_time = simTime;
+				HSM_QHsmTst.emergency_idle =1;
 				
 			}
 			
