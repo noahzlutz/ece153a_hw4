@@ -101,7 +101,15 @@ QState QHsmTst_emergency(QHsmTst *me){
        
 	   case EMERGENCY_OFF_SIG:{
            return Q_TRAN(&QHsmTst_stopped);
-       }    
+       }
+	   case TICK_SIG:
+	   case F1_SIG:
+		case F2_SIG:
+		case F3_SIG:
+		case F4_SIG:
+		case F5_SIG: {    
+			return Q_HANDLED();
+		}
     }
     return Q_SUPER(&QHsmTst_elevator);
 }
