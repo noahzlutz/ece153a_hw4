@@ -248,7 +248,8 @@ QState QHsmTst_stopped(QHsmTst *me) {
 /*..........................................................................*/
 QState QHsmTst_moving(QHsmTst *me) {
 	switch (Q_SIG(me)) {
-		case EMERGENCY_ON_SIG:{
+		case EMERGENCY_ON_SIG:{	
+			HSM_QHsmTst.curr_floor = HSM_QHsmTst.curr_floor + HSM_QHsmTst.curr_dir;
 			return Q_TRAN(&QHsmTst_emergency);
 			}
 		case EMERGENCY_OFF_SIG:{
