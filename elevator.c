@@ -97,8 +97,8 @@ QState QHsmTst_emergency(QHsmTst *me){
 			return Q_HANDLED();
 	   }
 	   case TICK_SIG:{
-		   	if(HSM_QHsmTst.emergency_idle ==1) return Q_HANDLED();
-			else{
+		   	//if(HSM_QHsmTst.emergency_idle ==1) return Q_HANDLED();
+			//else{
 				if(HSM_QHsmTst.curr_floor != 0){
 					if (HSM_QHsmTst.move_time < MOVE_TIME_F-1) HSM_QHsmTst.move_time++;
 					else {
@@ -112,7 +112,7 @@ QState QHsmTst_emergency(QHsmTst *me){
 					
 				}
 				return Q_HANDLED();
-			}
+			//}
 			
 			
 	   	} 
