@@ -79,7 +79,8 @@ QState QHsmTst_initial(QHsmTst *me) {
 QState QHsmTst_emergency(QHsmTst *me){
     switch (Q_sig(me)){
        case EMERGENCY_ON_SIG:{
-			for(int x =0; x <5; x++){
+			int x = 0;
+			for(x =0; x <5; x++){
 				HSM_QHsmTst.floor_req_curr[x]=0;
 				HSM_QHsmTst.floor_pen[x] = 0;
 			}
